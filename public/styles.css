@@ -49,3 +49,21 @@ html {
 .my-input-text::placeholder {
   color: #ccc;
 }
+
+.lobby {
+  padding-top: 40px;
+}
+
+.lobby ul {
+  list-style: none;
+  padding: 0;
+}
+
+.lobby li {
+  margin-bottom: 8px;
+}
+
+.room-meta {
+  color: #999;
+  font-size: 0.8em;
+}

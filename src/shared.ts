@@ -1,3 +1,9 @@
+export type RoomSummary = {
+  id: string;
+  created: number;
+  lastActive: number;
+};
+
 export type ChatMessage = {
   id: string;
   content: string;

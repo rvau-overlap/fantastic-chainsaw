@@ -7,6 +7,8 @@ import {
 
 import type { ChatMessage, Message } from "../shared";
 
+export { Registry } from "./registry";
+
 export class Chat extends Server<Env> {
   static options = { hibernate: true };
 
@@ -16,7 +18,7 @@ export class Chat extends Server<Env> {
     this.broadcast(JSON.stringify(message), exclude);
   }
 
-  onStart() {
+  async onStart() {
     // this is where you can initialize things that need to be done before the server starts
     // for example, load previous messages from a database or a service
 
@@ -29,6 +31,11 @@ export class Chat extends Server<Env> {
     this.messages = this.ctx.storage.sql
       .exec(`SELECT * FROM messages`)
       .toArray() as ChatMessage[];
+
+    // register this room so it shows up in the room list
+    const registryId = this.env.Registry.idFromName("registry");
+    const registry = this.env.Registry.get(registryId);
+    await registry.addRoom(this.name);
   }
 
   onConnect(connection: Connection) {
@@ -79,6 +86,14 @@ export class Chat extends Server<Env> {
 
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
+    if (url.pathname === "/api/rooms") {
+      const registryId = env.Registry.idFromName("registry");
+      const registry = env.Registry.get(registryId);
+      const rooms = await registry.listRooms();
+      return Response.json(rooms);
+    }
+
     return (
       (await routePartykitRequest(request, { ...env })) ||
       env.ASSETS.fetch(request)
