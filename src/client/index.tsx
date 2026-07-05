@@ -1,16 +1,66 @@
 import { createRoot } from "react-dom/client";
 import { usePartySocket } from "partysocket/react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
   Navigate,
+  Link,
+  useNavigate,
   useParams,
 } from "react-router";
 import { nanoid } from "nanoid";
 
-import { names, type ChatMessage, type Message } from "../shared";
+import { names, type ChatMessage, type Message, type RoomSummary } from "../shared";
+
+function Lobby() {
+  const [rooms, setRooms] = useState<RoomSummary[] | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    fetch("/api/rooms")
+      .then((res) => res.json())
+      .then((rooms) => setRooms(rooms as RoomSummary[]));
+  }, []);
+
+  return (
+    <div className="lobby container">
+      <div className="row">
+        <div className="columns">
+          <h4>
+            <b>Chat</b>, powered by Durable Objects
+          </h4>
+          <button
+            className="button-primary"
+            onClick={() => navigate(`/${nanoid()}`)}
+          >
+            Start a new chat room
+          </button>
+        </div>
+      </div>
+      <div className="row">
+        <div className="columns">
+          <h6>Previous chat rooms</h6>
+          {rooms === null && <p>Loading...</p>}
+          {rooms !== null && rooms.length === 0 && (
+            <p>No chat rooms yet. Start one above!</p>
+          )}
+          <ul>
+            {rooms?.map((room) => (
+              <li key={room.id}>
+                <Link to={`/${room.id}`}>{room.id}</Link>{" "}
+                <span className="room-meta">
+                  last active {new Date(room.lastActive).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function App() {
   const [name] = useState(names[Math.floor(Math.random() * names.length)]);
@@ -72,6 +122,9 @@ function App() {
 
   return (
     <div className="chat container">
+      <div className="row">
+        <Link to="/">&larr; All chat rooms</Link>
+      </div>
       {messages.map((message) => (
         <div key={message.id} className="row message">
           <div className="two columns user">{message.user}</div>
@@ -123,7 +176,7 @@ function App() {
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
     <Routes>
-      <Route path="/" element={<Navigate to={`/${nanoid()}`} />} />
+      <Route path="/" element={<Lobby />} />
       <Route path="/:room" element={<App />} />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
